@@ -16,12 +16,21 @@ if __name__ == "__main__":
 
 import numpy as np
 import cv2 as cv
+import os 
 
-cap = cv.VideoCapture(0)
-if not cap.isOpened():
-    print("Cannot open camera")
-    exit()
-while True:
+while True: 
+    a = input("numéro de caméra ?")
+    if int(a) == -1:
+        print("extinction")
+        os._exit(0)
+    cap = cv.VideoCapture(int(a))
+    if cap.isOpened():
+        break
+    else:
+        print("un autre numéro stp")
+        
+while cap.isOpened():
+    print(cap.isOpened())
     ret, frame = cap.read()
 
     if not ret:
@@ -32,7 +41,6 @@ while True:
     if cv.waitKey(1) == ord('q'):
         break
 
-print(cap.isOpened())
 cap.release()
 cv.destroyAllWindows()
 
