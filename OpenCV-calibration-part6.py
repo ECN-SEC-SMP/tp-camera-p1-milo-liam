@@ -8,7 +8,6 @@ Q_KEY = 113
 
 num_cam = 0
 
-
 def main():
     # Critère de raffinement des coins
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -18,12 +17,12 @@ def main():
 
     # Préparation des points 3D (fixes pour le damier)
     objp = np.zeros((pattern_size[0] * pattern_size[1], 3), np.float32)
-    objp[:, :2] = np.mgrid[0 : pattern_size[0], 0 : pattern_size[1]].T.reshape(-1, 2)
+    objp[:, :2] = np.mgrid[0:pattern_size[0], 0:pattern_size[1]].T.reshape(-1, 2)
 
-    objpoints = []  # points 3D
-    imgpoints = []  # points 2D
+    objpoints = []  # points 3D 
+    imgpoints = []  # points 2D 
 
-    # Seuil pour la calibration
+    # Seuil pour la calibration 
     NUM_CALIB_IMAGES = 10
 
     # Choix de la caméra
@@ -44,9 +43,7 @@ def main():
     camera_matrix = None
     dist_coeffs = None
 
-    print(
-        "Appuie sur 'c' pour enregistrer une image de calibration quand le damier est bien détecté."
-    )
+    print("Appuie sur 'c' pour enregistrer une image de calibration quand le damier est bien détecté.")
     print(f"Il faut {NUM_CALIB_IMAGES} images pour lancer la calibration.")
 
     while True:
@@ -59,7 +56,9 @@ def main():
 
         # Recherche du damier
         found, corners = cv.findChessboardCorners(
-            gray, pattern_size, cv.CALIB_CB_ADAPTIVE_THRESH + cv.CALIB_CB_FILTER_QUADS
+            gray,
+            pattern_size,
+            cv.CALIB_CB_ADAPTIVE_THRESH + cv.CALIB_CB_FILTER_QUADS
         )
 
         if found:
@@ -70,17 +69,15 @@ def main():
 
         # Gestion des touches
         key = cv.waitKey(1) & 0xFF
-        if key == ord("g"):
+        if key == ord('g'):
             show_gray = not show_gray
-        elif key == ord("c") and found:
-            # On capture une image en appuyant sur c si le damier est trouvé
+        elif key == ord('c') and found:
+            # On capture une image en appuyant sur c si le damier est trouvé 
             objpoints.append(objp.copy())
             imgpoints.append(corners2)
-            print(
-                f"Image de calibration enregistrée ({len(objpoints)}/{NUM_CALIB_IMAGES})"
-            )
+            print(f"Image de calibration enregistrée ({len(objpoints)}/{NUM_CALIB_IMAGES})")
 
-            # On calibre si on a au moins 10 images
+            # On calibre si on a au moins 10 images 
             if len(objpoints) >= NUM_CALIB_IMAGES and not calibrated:
                 print("==> Lancement de la calibration...")
                 ret, camera_matrix, dist_coeffs, rvecs, tvecs = cv.calibrateCamera(
@@ -89,20 +86,33 @@ def main():
                 print("Calibration terminée.")
                 print("\nMatrice intrinsèque (K) :\n", camera_matrix)
                 print("\nCoefficients de distorsion :\n", dist_coeffs)
-                calibrated = True
 
-        elif key == ord("q"):
+                # Calcul de la nouvelle matrice de caméra pour le redressement
+                h, w = frame.shape[:2]
+                new_camera_mtx, roi = cv.getOptimalNewCameraMatrix(
+                    camera_matrix, dist_coeffs, (w, h), 1, (w, h)
+                )
+
+                calibrated = True
+        
+        elif key == ord('q'):
             break
+        
+        # Affichage image redressée si on est calibré
+        if calibrated:
+            undistorted = cv.undistort(frame, camera_matrix, dist_coeffs, None, new_camera_mtx)
+            cv.imshow("undistorted", undistorted)
 
         # Affichage selon le mode
         if show_gray:
-            cv.imshow("frame", gray)
+            cv.imshow('frame', gray)
         else:
-            cv.imshow("frame", frame)
+            cv.imshow('frame', frame)
+
+        
 
     cap.release()
     cv.destroyAllWindows()
-
 
 if __name__ == "__main__":
     main()
